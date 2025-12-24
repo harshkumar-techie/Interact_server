@@ -30,7 +30,7 @@ async function connectDB() {
 }
 
 app.get('/', (req, res) => {
-  app.res("hello world")
+  res.send("hello world")
 })
 
 app.post("/login", async (req, res) => {
