@@ -29,6 +29,10 @@ async function connectDB() {
   return db;
 }
 
+app.get('/', (req, res) => {
+  app.res("hello world")
+})
+
 app.post("/login", async (req, res) => {
   try {
     const db = await connectDB();
