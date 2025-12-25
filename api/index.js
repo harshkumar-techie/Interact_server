@@ -12,21 +12,13 @@ app.use(express.json());
 app.use('/login', login)
 app.use('/signup', signup)
 
-app.listen(3000, () => {
-  console.log("server in live on port 3000")
+app.get('/',(req,res)=>{
+  res.send("Hello wirld")
 })
 
-app.post("/signup", async (req, res) => {
-  try {
-    const db = await connectDB();
-    await db.collection("user_data").insertOne(req.body);
-    console.log(req.body)
-    res.status(200).json({ message: "signup successful" });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "DB insert failed" });
-  }
-});
+app.listen(3000, () => {
+  console.log("server is live on port 3000")
+})
 
 
-export default app;
+// export default app;
