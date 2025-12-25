@@ -15,6 +15,5 @@ export async function connectDB() {
 
     await client.connect();
     db = client.db("interact");
-    console.log("✅ MongoDB connected");
     return db;
 }

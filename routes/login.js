@@ -5,7 +5,6 @@ const router = express.Router();
 
 router.post('/username', async (req, res) => {
     try {
-        console.log("username fecthed")
         const db = await connectDB();
         const data = await db.collection("user_data").findOne({ "username": req.body.username });
         if (data) {
@@ -14,7 +13,6 @@ router.post('/username', async (req, res) => {
             res.status(200).json({ "exist": false });
         }
     } catch (err) {
-        console.error(err);
         res.status(500).json({ message: "DB insert failed" });
     }
 });

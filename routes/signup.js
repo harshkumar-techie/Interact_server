@@ -17,6 +17,7 @@ router.post('/', async (req, res) => {
         res.status(500).json({ "message": "internal server error" });
     }
 
+
 }).post('/username', async (req, res) => {
     const db = await connectDB();
     const data = await db.collection('user_data').findOne({ "username": req.body.username })
