@@ -45,17 +45,21 @@ router.post('/msg', async (req, res) => {
     try {
         const db = await connectDB();
         const user = await db.collection('user_data').findOne({ username: req.body.username });
-        if (user.password === req.body.password) {
-            const chat = await db.collection('user_data').findOne({ username: req.body.msg.msg_to });
-            const chat_exist = await db.collection('chats_data').findOne({ users: { $all: [user.username, chat.username] } });
-            if (!chat.chats.some(obj => obj === user.username)) {//add user in receiving user chat list
-                await db.collection("user_data").updateOne({ username: chat.username }, { $push: { chats: user.username } });
+        if (req.body.msg.msg === "") {
+            res.status(200)
+        } else {
+            if (user.password === req.body.password) {
+                const chat = await db.collection('user_data').findOne({ username: req.body.msg.msg_to });
+                const chat_exist = await db.collection('chats_data').findOne({ users: { $all: [user.username, chat.username] } });
+                if (!chat.chats.some(obj => obj === user.username)) {//add user in receiving user chat list
+                    await db.collection("user_data").updateOne({ username: chat.username }, { $push: { chats: user.username } });
+                }
+                if (!chat_exist) {
+                    await db.collection('chats_data').insertOne({ users: [user.username, chat.username], chat: [] });
+                }
+                await db.collection('chats_data').updateOne({ users: { $all: [user.username, chat.username] } }, { $push: { chat: { id: (chat_exist.chat.length), by: user.username, msg: req.body.msg.msg } } });
+                res.status(200).json({ sent: true });
             }
-            if (!chat_exist) {
-                await db.collection('chats_data').insertOne({ users: [user.username, chat.username], chat: [] });
-            }
-            await db.collection('chats_data').updateOne({ users: { $all: [user.username, chat.username] } }, { $push: { chat: { id: (chat_exist.chat.length), by: user.username, msg: req.body.msg.msg } } });
-            res.status(200).json({ sent: true });
         }
     } catch (err) {
         res.status(400).json({ msg: "server error", sent: false });
@@ -68,9 +72,18 @@ router.post('/chat_refresher', async (req, res) => {
     if (user.password === req.body.password) {
         const data = await db.collection('chats_data').findOne({ users: { $all: [req.body.username, req.body.msgto] } });
         if (data) {
-            res.status(200).json(data.chat)
+            res.status(200).json({ status: true, chat_data: data.chat });
+        } else {
+            res.status(200).json({ status: false })
         }
     }
 })
 
+router.post('/profile_pic', async (req, res) => {
+    const db = await connectDB();
+    const user = await db.collection('user_data').findOne({ username: req.body.username });
+    if (user.password === req.body.password) {
+        res.status(200).json({ "dp_link": user.dp });
+    }
+})
 export default router; 
