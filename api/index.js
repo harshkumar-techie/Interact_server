@@ -15,6 +15,10 @@ app.use('/login', login)
 app.use('/signup', signup)
 app.use('/home', home)
 
+app.get('/', (req, res) => {
+    res.send("hello world")
+})
+
 // app.listen(3000, '0.0.0.0', () => {
 //   console.log("server is live on port 3000")
 // })
