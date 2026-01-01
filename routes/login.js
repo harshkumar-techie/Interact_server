@@ -1,7 +1,16 @@
 import express from 'express';
 import { connectDB } from '../db.js'
+import { createtoken } from '../middleware/jwt_auth.js';
 
 const router = express.Router();
+
+router.get('/', (req, res) => {
+    if (req.cookies.token) {
+        res.status(200).json({ auth: true });
+    } else {
+        res.status(200).json({ auth: false });
+    }
+})
 
 router.post('/username', async (req, res) => {
     try {
@@ -17,17 +26,22 @@ router.post('/username', async (req, res) => {
     }
 });
 
-router.post('/', async (req, res) => {
+router.post('/auth', async (req, res) => {
     try {
         const db = await connectDB();
-        const data = await db.collection("user_data").findOne({ "username": req.body.username })
-        if (data.password === req.body.password) {
-            res.status(200).json({ "auth": true });
-        } else {
-            res.status(200).json({ "auth": false });
+        const user = await db.collection('user_data').findOne({ username: req.body.username, password: req.body.password });
+        if (user) {
+            const token = createtoken({ username: user.username, name: user.name })
+            res.cookie("token", token, {
+                httpOnly: true,
+                secure: false,
+                sameSite: "strict"
+            });
+            res.status(200).json({ auth: true });
         }
-    } catch (error) {
-        res.status(500).json({ "message": "Internal Server error" });
+    }
+    catch (err) {
+        res.status(500)
     }
 })
 

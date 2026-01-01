@@ -4,10 +4,16 @@ import "dotenv/config";
 import login from '../routes/login.js'
 import signup from '../routes/signup.js'
 import home from '../routes/home.js'
+import cookieParser from "cookie-parser";
 
 const app = express();
+app.use(cookieParser());
 
-app.use(cors());
+app.use(cors({
+  origin: "http://192.168.1.62:5173",
+  credentials: true
+}));
+
 app.use(express.json());
 app.use(express.static("public"));
 
@@ -16,12 +22,17 @@ app.use('/signup', signup)
 app.use('/home', home)
 
 app.get('/', (req, res) => {
-    res.send("hello world")
+  res.send("hello world")
 })
 
-// app.listen(3000, '0.0.0.0', () => {
-//   console.log("server is live on port 3000")
-// })
+app.get('/test-cookie', (req, res) => {
+  res.cookie("test", "hello", { httpOnly: true, sameSite: "lax" });
+});
+
+app.listen(3000, '0.0.0.0', () => {
+  console.log("server is live on port 3000")
+})
 
 
-export default app;
+
+// export default app;
