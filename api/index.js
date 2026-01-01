@@ -29,10 +29,10 @@ app.get('/test-cookie', (req, res) => {
   res.cookie("test", "hello", { httpOnly: true, sameSite: "lax" });
 });
 
-app.listen(3000, '0.0.0.0', () => {
-  console.log("server is live on port 3000")
-})
+// app.listen(3000, '0.0.0.0', () => {
+//   console.log("server is live on port 3000")
+// })
 
 
 
-// export default app;
+export default app;
