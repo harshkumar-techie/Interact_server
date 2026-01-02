@@ -34,7 +34,7 @@ router.post('/auth', async (req, res) => {
             const token = createtoken({ username: user.username, name: user.name })
             res.cookie("token", token, {
                 httpOnly: true,
-                secure: true,
+                secure: false,
                 sameSite: "none",
                 path:'/'
             });
