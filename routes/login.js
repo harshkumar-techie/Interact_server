@@ -22,6 +22,7 @@ router.post('/username', async (req, res) => {
             res.status(200).json({ "exist": false });
         }
     } catch (err) {
+        console.error("LOGIN /username error:", err);
         res.status(500).json({ message: "DB query failed" });
     }
 });
