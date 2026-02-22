@@ -22,7 +22,7 @@ router.post('/username', async (req, res) => {
             res.status(200).json({ "exist": false });
         }
     } catch (err) {
-        res.status(500).json({ message: "DB insert failed" });
+        res.status(500).json({ message: "DB query failed" });
     }
 });
 
@@ -32,17 +32,20 @@ router.post('/auth', async (req, res) => {
         const user = await db.collection('user_data').findOne({ username: req.body.username, password: req.body.password });
         if (user) {
             const token = createtoken({ username: user.username, name: user.name })
+            const isProduction = !!process.env.VERCEL;
             res.cookie("token", token, {
                 httpOnly: true,
-                secure: true,
-                sameSite: "none",
-                path:'/'
+                secure: isProduction,
+                sameSite: isProduction ? "none" : "lax",
+                path: '/'
             });
             res.status(200).json({ auth: true });
+        } else {
+            res.status(200).json({ auth: false });
         }
     }
     catch (err) {
-        res.status(500)
+        res.status(500).json({ message: "server error" });
     }
 })
 

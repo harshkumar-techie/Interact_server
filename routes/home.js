@@ -1,4 +1,4 @@
-import express, { json } from 'express';
+import express from 'express';
 import { connectDB } from '../db.js'
 import { verifytoken } from '../middleware/jwt_auth.js'
 
@@ -19,7 +19,7 @@ router.post('/add_user', async (req, res) => {
         return res.status(200).json({ message: "This user doesn't exist", status: false });
     }
 
-    if (user.chats.some(obj => obj === req.body.searchUser)) {//retruns if user already in chat list
+    if ((user.chats || []).some(obj => obj === req.body.searchUser)) {//returns if user already in chat list
         return res.status(200).json({ message: "user already exist in your chat list" })
     }
     await db.collection('user_data').updateOne(
@@ -53,13 +53,13 @@ router.post('/msg', async (req, res) => {
 
         const chat_exist = await db.collection('chats_data').findOne({ users: { $all: [user.username, second_user.username] } });
 
-        if (!chat_exist) {//chat list nox exist then it creates new entry
+        if (!chat_exist) {//chat list not exist then it creates new entry
             await db.collection('chats_data').insertOne({ users: [user.username, second_user.username], chat: [] });
         }
 
         const chat = await db.collection('chats_data').findOne({ users: { $all: [user.username, second_user.username] } });
 
-        if (!second_user.chats.some(obj => obj === user.username)) {//add user in receiving user chat list
+        if (!(second_user.chats || []).some(obj => obj === user.username)) {//add user in receiving user chat list
             await db.collection("user_data").updateOne({ username: second_user.username }, { $push: { chats: user.username } });
         }
 
@@ -74,10 +74,19 @@ router.post('/msg', async (req, res) => {
 })
 
 router.post('/profile_pic', async (req, res) => {
-    const db = await connectDB();
-    const user = await db.collection('user_data').findOne({ username: req.body.username });
-    if (user.password === req.body.password) {
-        res.status(200).json({ "dp_link": user.dp });
+    try {
+        const db = await connectDB();
+        const user = await db.collection('user_data').findOne({ username: req.body.username });
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+        if (user.password === req.body.password) {
+            res.status(200).json({ "dp_link": user.dp });
+        } else {
+            res.status(401).json({ message: "Invalid credentials" });
+        }
+    } catch (err) {
+        res.status(500).json({ message: "server error" });
     }
 })
 
@@ -90,7 +99,7 @@ router.post('/status', (req, res) => {
             res.status(200).json({ auth: false });
         }
     } catch (err) {
-        res.status(400);
+        res.status(400).json({ auth: false, msg: "error" });
     }
 });
 
@@ -114,15 +123,19 @@ const chat_data = async (username, chats, db) => {
 }
 
 router.post('/sync_chats', async (req, res) => {
-    const auth = verifytoken(req.cookies.token);
-    if (!auth) {
-        return res.status(200).json({ status: false, msg: "invalid credeintials" })
+    try {
+        const auth = verifytoken(req.cookies.token);
+        if (!auth) {
+            return res.status(200).json({ status: false, msg: "invalid credentials" })
+        }
+        const db = await connectDB();
+        const user = await db.collection('user_data').findOne({ username: auth.username });//to find user chat list
+        const chats_list_db = await db.collection('user_data').find({ username: { $in: user.chats || [] } }).toArray();//to get chat list
+        const chats_list = chat_list(chats_list_db);
+        const chats_data = await chat_data(user.username, user.chats || [], db);
+        res.status(200).json({ "chats_list": chats_list, "chats_data": chats_data })
+    } catch (err) {
+        res.status(500).json({ status: false, msg: "server error" });
     }
-    const db = await connectDB();
-    const user = await db.collection('user_data').findOne({ username: auth.username });//to find user chat list
-    const chats_list_db = await db.collection('user_data').find({ username: { $in: user.chats } }).toArray();//to get chat list
-    const chats_list = chat_list(chats_list_db);
-    const chats_data = await chat_data(user.username, user.chats, db);
-    res.status(200).json({ "chats_list": chats_list, "chats_data": chats_data })
 })
-export default router; 
+export default router;

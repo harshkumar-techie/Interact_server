@@ -10,7 +10,7 @@ const app = express();
 app.use(cookieParser());
 
 app.use(cors({
-  origin: "https://interact.harshtechie.xyz",
+  origin: process.env.CLIENT_URL || "http://localhost:5173",
   credentials: true
 }));
 
@@ -25,11 +25,11 @@ app.get('/', (req, res) => {
   res.send("hello world")
 })
 
-
-// app.listen(3000, '0.0.0.0', () => {
-//   console.log("server is live on port 3000")
-// })
-
-
+// Only listen when running locally (not on Vercel)
+if (!process.env.VERCEL) {
+  app.listen(3000, '0.0.0.0', () => {
+    console.log("server is live on port 3000")
+  })
+}
 
 export default app;
